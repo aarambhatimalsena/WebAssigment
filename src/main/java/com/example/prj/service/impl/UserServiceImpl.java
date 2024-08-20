@@ -1,67 +1,69 @@
 package com.example.prj.service.impl;
 
-import com.example.prj.config.PasswordEncoderUtil;
-import com.example.prj.entity.Role;
 import com.example.prj.entity.User;
-import com.example.prj.pojo.UserPojo;
 import com.example.prj.repository.UserRepository;
 import com.example.prj.service.UserService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
+
+    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
     @Override
-    public void saveUser(UserPojo userPojo) {
+    public User registerUser(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return userRepository.save(user);
+    }
 
-        User user = new User();
-
-        if(userPojo.getId()!=null){
-            user=userRepository.findById(userPojo.getId())
-                    .orElseThrow(()-> new NoSuchElementException("No data found"));
+    @Override
+    public User loginUser(String email, String password) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (passwordEncoder.matches(password, user.getPassword())) {
+                return user;
+            } else {
+                throw new RuntimeException("Invalid password");
+            }
+        } else {
+            throw new RuntimeException("User not found with email: " + email);
         }
-
-        user.setFirstName(userPojo.getFirstName());
-        user.setLastName(userPojo.getLastName());
-        user.setEmail(userPojo.getEmail());
-        user.setPassword(PasswordEncoderUtil.getInstance().encode(userPojo.getPassword()));
-
-
-        userRepository.save(user);
     }
 
     @Override
-    public List<User> getAllData() {
-        return userRepository.findAll(); // select * from users
+    public User updateUser(Integer id, User updatedUser) {
+        return userRepository.findById(id).map(user -> {
+            user.setFirstName(updatedUser.getFirstName());
+            user.setLastName(updatedUser.getLastName());
+            user.setEmail(updatedUser.getEmail());
+            user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+            user.setPhoneNumber(updatedUser.getPhoneNumber());
+            user.setRole(updatedUser.getRole());
+            return userRepository.save(user);
+        }).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
     }
 
     @Override
-    public Optional<User> getById(Integer id) {
-        return userRepository.findById(id);
-    }
-
-    @Override
-    public void deleteById(Integer id) {
+    public void deleteUser(Integer id) {
         userRepository.deleteById(id);
     }
 
     @Override
-    public void updateUser(Integer id, UserPojo updatedUserDetails) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("User not found"));
+    public User getUserById(Integer id) {
+        return userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
 
-        user.setFirstName(updatedUserDetails.getFirstName());
-        user.setLastName(updatedUserDetails.getLastName());
-        user.setEmail(updatedUserDetails.getEmail());
-
-        userRepository.save(user);
+    @Override
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 }

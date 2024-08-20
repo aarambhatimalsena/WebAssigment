@@ -30,7 +30,7 @@
     font-size: 33px;
     margin-top: -40px;
     font-weight: bold;
-    color: white;
+    color: black;
 
 }
 .login-form {
@@ -39,7 +39,7 @@
     align-items: center;
     height: 60%;
     width: 29%;
-    background-color: rgba(255, 255, 255, 0.1); /* 0.7 is the alpha channel, adjust as needed */
+    background-color: rgba(255, 255, 255, 0.8); /* 0.7 is the alpha channel, adjust as needed */
     border: 2px solid black;
     border-radius: 40px;
 
@@ -111,22 +111,13 @@
     background-color: grey; /* Change to your desired hover color */
 }
 .login-link a {
-    color:white;
+    color:rebeccapurple;
+    margin-left: 5px;
 
 }
 .login-link label{
-    color: white;
+    color: black;
 }
 .login-link a:hover {
-    color:black;
+    color:red;
 }
-
-
-
-
-
-
-
-
-
-

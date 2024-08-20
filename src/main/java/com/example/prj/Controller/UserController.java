@@ -1,55 +1,60 @@
-package com.example.prj.Controller;
+package com.example.prj.controller;
 
 import com.example.prj.entity.User;
-import com.example.prj.pojo.UserPojo;
+import com.example.prj.payload.ApiResponse;
 import com.example.prj.service.UserService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 
-@RequestMapping("/user")
 @RestController
-@RequiredArgsConstructor
-
+@RequestMapping("/api/users")
 public class UserController {
 
-    private final UserService userService;
+    @Autowired
+    private UserService userService;
 
-    @PostMapping("/save")
-    public String saveUser(@Valid @RequestBody UserPojo userPojo){
-        userService.saveUser(userPojo);
-        return "data created successfully";
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<User>> registerUser(@RequestBody User user) {
+        User registeredUser = userService.registerUser(user);
+        ApiResponse<User> response = new ApiResponse<>(true, "User registered successfully", registeredUser);
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/getAll")
-    public List<User> getAllData(){
-        return userService.getAllData();
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<User>> loginUser(@RequestBody User loginRequest) {
+        User user = userService.loginUser(loginRequest.getEmail(), loginRequest.getPassword());
+        ApiResponse<User> response = new ApiResponse<>(true, "Login successful", user);
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/getById/{id}")
-    public Optional<User> getDataById(@PathVariable("id") Integer id){
-        return userService.getById(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable Integer id) {
+        User user = userService.getUserById(id);
+        ApiResponse<User> response = new ApiResponse<>(true, "User fetched successfully", user);
+        return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/deleteById/{id}")
-    public void deleteById(@PathVariable("id") Integer id){
-        userService.deleteById(id);
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
+        ApiResponse<List<User>> response = new ApiResponse<>(true, "Users fetched successfully", users);
+        return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<String> updateUser(@PathVariable("id") Integer id, @RequestBody UserPojo updatedUserDetails) {
-        try {
-            userService.updateUser(id, updatedUserDetails);
-            return new ResponseEntity<>("User updated successfully", HttpStatus.OK);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
-        }
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<User>> updateUser(@PathVariable Integer id, @RequestBody User updatedUser) {
+        User user = userService.updateUser(id, updatedUser);
+        ApiResponse<User> response = new ApiResponse<>(true, "User updated successfully", user);
+        return ResponseEntity.ok(response);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Integer id) {
+        userService.deleteUser(id);
+        ApiResponse<Void> response = new ApiResponse<>(true, "User deleted successfully", null);
+        return ResponseEntity.ok(response);
+    }
 }

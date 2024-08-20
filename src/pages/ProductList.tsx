@@ -1,65 +1,86 @@
 import React, { useState, useEffect } from 'react';
-import {Link, useNavigate} from 'react-router-dom';
 import axios from 'axios';
-import './Dashboard.css';
+import './ProductList.css';
+import AddProductModal from './AddProductModal';
+import EditProductModal from './EditProductModal';
+import {Link, useNavigate} from "react-router-dom";
 
-const Dashboard: React.FC = () => {
+const ProductList: React.FC = () => {
     const navigate = useNavigate();
+    const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<any>(null);
     const [products, setProducts] = useState<any[]>([]);
 
     useEffect(() => {
-        // Fetch products from API
-        axios.get('http://localhost:8080/api/items')
-            // Adjust the API endpoint as needed
-            .then(response => {
-                setProducts(response.data.data);
-                console.log(response.data.data)
-            })
-            .catch(error => {
+        // Fetch initial product list
+        const fetchProducts = async () => {
+            try {
+                const response = await axios.get('http://localhost:8080/api/items');
+                
+                if (response.data.success) {
+                    setProducts(response.data.data);
+                }
+            } catch (error) {
                 console.error('Error fetching products:', error);
-            });
+            }
+        };
+        fetchProducts();
     }, []);
+
+    const handleAddProductClick = () => {
+        setIsAddModalVisible(true);
+    };
+
+    const handleCloseAddModal = () => {
+        setIsAddModalVisible(false);
+    };
+
+    const handleCloseEditModal = () => {
+        setIsEditModalVisible(false);
+        setSelectedProduct(null);
+    };
+
+    const handleEditClick = (product: any) => {
+        setSelectedProduct(product);
+        setIsEditModalVisible(true);
+    };
+
+    const handleDeleteClick = async (id: number) => {
+        try {
+            await axios.delete(`http://localhost:8080/api/items/${id}`);
+            setProducts(products.filter(product => product.id !== id));
+        } catch (error) {
+            console.error('Error deleting product:', error);
+        }
+    };
+
+    const handleProductUpdate = () => {
+        // Refresh product list after update
+        const fetchProducts = async () => {
+            try {
+                const response = await axios.get('http://localhost:8080/api/items');
+                if (response.data.success) {
+                    setProducts(response.data.data);
+                }
+            } catch (error) {
+                console.error('Error fetching products:', error);
+            }
+        };
+        fetchProducts();
+    };
 
     const handleLogout = () => {
         // Perform logout operations if needed, then navigate to the home page
         navigate('/');
     };
 
-    const handleAddToCart = (product: any) => {
-        axios.post('/api/cart', {
-            name: product.name,
-            price: product.price,
-            // Include other product details if needed
-        })
-            .then(response => {
-                console.log('Product added to cart:', response.data);
-            })
-            .catch(error => {
-                console.error('Error adding product to cart:', error);
-            });
-    };
 
-    const handleAddToFavorites = (product: any) => {
-        axios.post('/api/favorites', {
-            name: product.name,
-            price: product.price,
-            // Include other product details if needed
-        })
-            .then(response => {
-                console.log('Product added to favorites:', response.data);
-            })
-            .catch(error => {
-                console.error('Error adding product to favorites:', error);
-            });
-    };
-
-    // @ts-ignore
     return (
-        <div>
-            {/* Header Component */}
+        <div className="container">
             <header className="header">
                 <div className="container header-container">
-                    <a className="logo" href="#">
+                    <a className="logo" href="/dashboard">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                              className="icon">
@@ -153,67 +174,71 @@ const Dashboard: React.FC = () => {
                     </div>
                 </div>
             </header>
+            <div className="header">
+                <h1 className="title">Product List</h1>
+                <button className="add-button" onClick={handleAddProductClick}>Add Product</button>
+            </div>
+            <div className="table-container">
+                <table className="product-table">
+                    <thead>
+                    <tr className="table-header">
+                        <th className="header-cell">Name</th>
+                        <th className="header-cell">Description</th>
+                        <th className="header-cell">Price</th>
+                        <th className="header-cell">Quantity</th>
+                        <th className="header-cell">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {products.map(product => (
+                        <tr key={product.id} className="table-row">
+                            <td className="cell">{product.itemName}</td>
+                            <td className="cell text-muted">{product.itemDescription}</td>
+                            <td className="cell text-right">${product.itemPerPrice}</td>
+                            <td className="cell text-right">{product.itemQuantity}</td>
+                            <td className="cell text-right action-buttons">
+                                <button className="action-button edit-button" onClick={() => handleEditClick(product)}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                         fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                                         strokeLinejoin="round">
+                                        <path d="M12 22h6a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v10"></path>
+                                        <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                                        <path d="M10.4 12.6a2 2 0 1 1 3 3L8 21l-4 1 1-4Z"></path>
+                                    </svg>
+                                    <span className="sr-only">Edit</span>
+                                </button>
+                                <button className="action-button delete-button"
+                                        onClick={() => handleDeleteClick(product.id)}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                         fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                                         strokeLinejoin="round">
+                                        <path d="M3 6h18"></path>
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                    </svg>
+                                    <span className="sr-only">Delete</span>
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            </div>
 
-            {/* MainSection Component */}
-            <main>
-                <section className="hero-section">
-                    <div className="container hero-container">
-                        <div className="hero-text">
-                            <h1 className="hero-title">Find the Perfect Computer for You</h1>
-                            <p className="hero-description">Discover a wide range of</p>
-                            <p className="hero-description">the latest and greatest computers</p>
-                            <a className="hero-button" href="#">Shop Now</a>
-                        </div>
-                        <div className="hero-image">
-                            <img
-                                src="https://images.pexels.com/photos/842548/pexels-photo-842548.jpeg?auto=compress&cs=tinysrgb&w=600"
-                                alt="Hero"/>
-                        </div>
-                    </div>
-                </section>
-            </main>
+            {/* Render Add Product Modal */}
+            <AddProductModal isVisible={isAddModalVisible} onClose={handleCloseAddModal}/>
 
-            {/* Product Cards */}
-
-            <section className="featured-products bg-red-800">
-                <div className="container featured-products-container">
-                    <h2 className="section-title">Featured Products</h2>
-                    <div className="products-grid">
-                        <main className="product-cards" style={{
-                            maxHeight: "17rem"
-                        }}>
-                            {products.map((product) => (
-                                <div key={product.id} className="product-card bg-red-900" style={{
-                                    maxHeight: "max-content"
-                                }}>
-                                    <img src={product.itemImage} alt={product.name} className="product-image"/>
-                                    <div className="product-details">
-                                        <p className="product-price">${product.itemPerPrice}</p>
-                                        <h2 className="product-name">{product.itemName}</h2>
-                                        <p className="product-price">${product.itemDescription}</p>
-                                        <button className="btn btn-primary" onClick={() => handleAddToCart(product)}>Add
-                                            to Cart
-                                        </button>
-                                        <button className="btn btn-secondary"
-                                                onClick={() => handleAddToFavorites(product)}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                 viewBox="0 0 24 24"
-                                                 fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                                                 strokeLinejoin="round" className="icon">
-                                                <path
-                                                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </main>
-                    </div>
-                </div>
-            </section>
-
+            {/* Render Edit Product Modal */}
+            {selectedProduct && (
+                <EditProductModal
+                    isVisible={isEditModalVisible}
+                    product={selectedProduct}
+                    onClose={handleCloseEditModal}
+                    onUpdate={handleProductUpdate}
+                />
+            )}
         </div>
     );
 };
 
-export default Dashboard;
+export default ProductList;

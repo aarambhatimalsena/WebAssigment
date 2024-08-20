@@ -1,57 +1,68 @@
 package com.example.prj.Controller;
 
 import com.example.prj.entity.Item;
-import com.example.prj.entity.User;
-import com.example.prj.pojo.ItemPojo;
-
 import com.example.prj.service.ItemService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import com.example.prj.payload.ApiResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
-@RequestMapping("/item")
 @RestController
-@RequiredArgsConstructor
+@RequestMapping("/api/items")
 public class ItemController {
-    private final ItemService itemService;
 
-    @PostMapping("/save")
-    public String saveItem(@RequestBody @ModelAttribute ItemPojo itemPojo) throws IOException {
-        itemService.saveItem(itemPojo);
-        return "data created successfully yoh";
+    @Autowired
+    private ItemService itemService;
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<Item>> createItem(@RequestBody Item item) {
+        Item createdItem = itemService.saveItem(item);
+        ApiResponse<Item> response = new ApiResponse<>(true, "Item created successfully", createdItem);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @GetMapping("/getAll")
-    public List<Item> findAll(){
-        return itemService.findAll();
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<Item>> updateItem(@PathVariable Integer id, @RequestBody Item item) {
+        Item updatedItem = itemService.updateItem(id, item);
+        if (updatedItem != null) {
+            ApiResponse<Item> response = new ApiResponse<>(true, "Item updated successfully", updatedItem);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            ApiResponse<Item> response = new ApiResponse<>(false, "Item not found", null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
     }
 
-    @GetMapping("/getById/{id}")
-    public Optional<Item> findById(@PathVariable("id") Integer id){
-        return itemService.findById(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<Item>> getItemById(@PathVariable Integer id) {
+        Item item = itemService.getItemById(id);
+        if (item != null) {
+            ApiResponse<Item> response = new ApiResponse<>(true, "Item found", item);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            ApiResponse<Item> response = new ApiResponse<>(false, "Item not found", null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
     }
 
-    @DeleteMapping("/deleteById/{id}")
-    public void deleteById(@PathVariable("id") Integer id){
-        itemService.deleteById(id);
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<Item>>> getAllItems() {
+        List<Item> items = itemService.getAllItems();
+        ApiResponse<List<Item>> response = new ApiResponse<>(true, "Items retrieved successfully", items);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/searchByName/{itemName}")
-    public List<Item> searchByName(@PathVariable("itemName") String itemName) {
-        return itemService.searchByName(itemName);
-    }
-    @GetMapping("/getItemsByBrandName/{brandName}")
-    public List<Item> getItemsByBrandName(@PathVariable("brandName") String brandName) {
-        return itemService.getItemsByBrandName(brandName);
-    }
-
-
-    @GetMapping("/getItemsByCategoryName/{categoryName}")
-    public List<Item> getItemsByCategoryName(@PathVariable("categoryName") String categoryName) {
-        return itemService.getItemsByCategoryName(categoryName);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteItem(@PathVariable Integer id) {
+        if (itemService.deleteItem(id)) {
+            ApiResponse<Void> response = new ApiResponse<>(true, "Item deleted successfully", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            ApiResponse<Void> response = new ApiResponse<>(false, "Item not found", null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
     }
 }

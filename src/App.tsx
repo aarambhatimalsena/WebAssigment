@@ -36,6 +36,8 @@ import Cart from "./pages/Cart.tsx";
 import AssignDelivery from "./pages/AssignDelivery.tsx";
 import Brands from "./pages/Brands.tsx";
 import Category from "./pages/Category.tsx";
+import ProductList from "./pages/ProductList.tsx";
+import UserManagement from "./pages/UserManagement.tsx";
 
 
 const router=createBrowserRouter([
@@ -77,6 +79,8 @@ const router=createBrowserRouter([
      {path:"/brands/:brandName",element:<Brands />},
     {path:"/categories/:categoryName",element:<Category />},
     {path:"/admin/assigndelivery",element:<AssignDelivery/>},
+    {path:"/add-products",element:<ProductList/>},
+    {path:"/add-users",element:<UserManagement/>},
 ])
 
 const queryClient= new QueryClient();
@@ -90,4 +94,3 @@ function App() {
     )
 }
 export default App
-
